@@ -90,14 +90,39 @@ void instDecExec(unsigned int instWord)
                 }
                 break;
             case 6:
+                cout << "\tOR\tx" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
                 regs[rd] = regs[rs1] | regs[rs2];
                 break;
             case 7:
+                cout << "\tAND\tx" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
                 regs[rd] = regs[rs1] & regs[rs2];
                 break;
 			default:
-							cout << "\tUnkown R Instruction \n";
+			    cout << "\tUnkown R Instruction \n";
 		}
+	} else if (opcode==0b0100011) { //S instructions
+	    S_imm = rd & (funct7<<5);
+        switch (funct3){
+            case 0:
+                cout << "\tSB\tx" << rs1 << ", x" << rs2 << ", x" << S_imm << "\n";
+                memory[rs2+S_imm] = rs1 & 0x000000FF;
+                break;
+            case 1:
+                cout << "\tSH\tx" << rs1 << ", x" << rs2 << ", x" << S_imm << "\n";
+                memory[rs2+S_imm] = rs1 & 0x0000FFFF;
+                break;
+            case 2:
+                cout << "\tSW\tx" << rs1 << ", x" << rs2 << ", x" << S_imm << "\n";
+                memory[rs2+S_imm] = rs1;
+                break;
+            default:
+                cout << "\tUnkown S Instruction \n";
+        }
+	} else if (opcode == 0b1100011) {
+	    B_imm = (((rd>>1)<<1)&0x0000001F) | (funct7&0x0000003F)<<5 | (rd&0x1<<11) | ((funct7>>6)&0x1)<<12;
+	    switch (funct3) {
+            case 0:}
+	}
 	} else if(opcode == 0x13){	// I instructions
 		switch(funct3){
 			case 0:	cout << "\tADDI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
