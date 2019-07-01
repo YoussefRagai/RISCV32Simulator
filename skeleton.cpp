@@ -122,8 +122,31 @@ void instDecExec(unsigned int instWord)
 	    B_imm = (((rd>>1)<<1)&0x0000001F) | (funct7&0x0000003F)<<5 | (rd&0x1<<11) | ((funct7>>6)&0x1)<<12;
 	    switch (funct3) {
             case 0:
-                printf("TODO\n");
+                cout << "\tBEQ\tx" << rs1 << ", x" << rs2 << ", "<< hex << "0x" << (int)B_imm << "\n";
+                pc = rs1==rs2?B_imm:pc;
                 break;
+            case 1:
+                cout << "\tBNE\tx" << rs1 << ", x" << rs2 << ", "<< hex << "0x" << (int)B_imm << "\n";
+                pc = rs1!=rs2?B_imm:pc;
+                break;
+            case 4:
+                cout << "\tBLT\tx" << rs1 << ", x" << rs2 << ", "<< hex << "0x" << (int)B_imm << "\n";
+                pc = rs1<rs2?B_imm:pc;
+                break;
+            case 5:
+                cout << "\tBGE\tx" << rs1 << ", x" << rs2 << ", "<< hex << "0x" << (int)B_imm << "\n";
+                pc = rs1>=rs2?B_imm:pc;
+                break;
+            case 6:
+                cout << "\tBLTU\tx" << rs1 << ", x" << rs2 << ", "<< hex << "0x" << (int)B_imm << "\n";
+                pc = (unsigned int)rs1<(unsigned int)rs2?B_imm:pc;
+                break;
+            case 7:
+                cout << "\tBGEU\tx" << rs1 << ", x" << rs2 << ", "<< hex << "0x" << (int)B_imm << "\n";
+                pc = (unsigned int)rs1>=(unsigned int)rs2?B_imm:pc;
+                break;
+            default:
+                cout << "\tUnkown B Instruction \n";
 	    }
 	} else if(opcode == 0x13){	// I instructions
 		switch(funct3){
