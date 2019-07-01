@@ -121,8 +121,10 @@ void instDecExec(unsigned int instWord)
 	} else if (opcode == 0b1100011) {
 	    B_imm = (((rd>>1)<<1)&0x0000001F) | (funct7&0x0000003F)<<5 | (rd&0x1<<11) | ((funct7>>6)&0x1)<<12;
 	    switch (funct3) {
-            case 0:}
-	}
+            case 0:
+                printf("TODO\n");
+                break;
+	    }
 	} else if(opcode == 0x13){	// I instructions
 		switch(funct3){
 			case 0:	cout << "\tADDI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
@@ -171,8 +173,8 @@ void instDecExec(unsigned int instWord)
 				break;
 
 			case 1:
-				unsigned int t0;
-				t0 = ((instWord >> 20) & 0x1F);
+				unsigned int t2;
+				t2 = ((instWord >> 20) & 0x1F);
 				cout << "\tSRAI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
 				for (int i = 0; i < t1; i++) {
 					regs[rd] = regs[rs1] << 1 & (((regs[rs1] << 31) ? 0xFFFFF800 : 0x0));
@@ -203,7 +205,9 @@ void instDecExec(unsigned int instWord)
 			regs[rd] = ((unsigned char)memory[rs1 + ((int)I_imm)] | (unsigned char)memory[rs1 + ((int)I_imm + 1) << 8 | (unsigned char)memory[rs1 + ((int)I_imm) + 2] << 16 | (unsigned char)memory[rs1 + ((int)I_imm) + 3] << 24]);
 
 		}
-	}
+	} else {
+        cout << "\tUnkown Instruction \n";
+    }
 
 }
 
