@@ -28,64 +28,77 @@ void emitError(const char *s)
 void printPrefix(unsigned int instA, unsigned int instW){
 	cout << "0x" << hex << std::setfill('0') << std::setw(8) << instA << "\t0x" << std::setw(8) << instW;
 }
-void instDecExec(unsigned int instWord)
-{
-	unsigned int rd, rs1, rs2, funct3, funct7, opcode;
-	unsigned int I_imm, S_imm, B_imm, U_imm, J_imm;
-	unsigned int address;
 
-	unsigned int instPC = pc - 4;
+void instDecExec16(unsigned int instHalf){
+    unsigned int rd, rs1, rs2, funct3, funct4, opcode;
+    unsigned int I_imm, S_imm, B_imm, U_imm, J_imm;
+    unsigned int address;
 
-	opcode = instWord & 0x0000007F;
-	rd = (instWord >> 7) & 0x0000001F;
-	funct3 = (instWord >> 12) & 0x00000007;
-	rs1 = (instWord >> 15) & 0x0000001F;
-	rs2 = (instWord >> 20) & 0x0000001F;
+    unsigned int instPC = pc - 2;
 
-	// — inst[31] — inst[30:25] inst[24:21] inst[20]
-	I_imm = ((instWord >> 20) & 0x7FF) | (((instWord >> 31) ? 0xFFFFF800 : 0x0));
+    opcode = instHalf & 0x00000003;
+    funct3 = (instHalf >> 13) & 0x00000007;
+    rd = rs1 = (instHalf >> 7) & 0x0000001F;
+    rs2 = (instHalf >> 2) & 0x0000001F;
+    funct4 = (instHalf>>12) & 0x0000000F;
 
-	printPrefix(instPC, instWord);
+    if(opcode==)
+}
+void instDecExec(unsigned int instWord) {
+    unsigned int rd, rs1, rs2, funct3, funct7, opcode;
+    unsigned int I_imm, S_imm, B_imm, U_imm, J_imm;
+    unsigned int address;
 
-	if(opcode == 0x33){		// R Instructions
-		switch(funct3){
-			case 0:
-			    if(funct7 == 32) {
+    unsigned int instPC = pc - 4;
+
+    opcode = instWord & 0x0000007F;
+    rd = (instWord >> 7) & 0x0000001F;
+    funct3 = (instWord >> 12) & 0x00000007;
+    rs1 = (instWord >> 15) & 0x0000001F;
+    rs2 = (instWord >> 20) & 0x0000001F;
+
+    // — inst[31] — inst[30:25] inst[24:21] inst[20]
+    I_imm = ((instWord >> 20) & 0x7FF) | (((instWord >> 31) ? 0xFFFFF800 : 0x0));
+
+    printPrefix(instPC, instWord);
+
+    if (opcode == 0x33) {        // R Instructions
+        switch (funct3) {
+            case 0:
+                if (funct7 == 32) {
                     cout << "\tSUB\tx" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
                     regs[rd] = regs[rs1] - regs[rs2];
-                }
-                else {
+                } else {
                     cout << "\tADD\tx" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
                     regs[rd] = regs[rs1] + regs[rs2];
                 }
                 break;
             case 1:
                 cout << "\tSLL\tx" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
-                regs[rd] = (regs[rs1])<<regs[rs2];
+                regs[rd] = (regs[rs1]) << regs[rs2];
                 break;
             case 2:
                 cout << "\tSLT\tx" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
-                regs[rd] = regs[rs1]<regs[rs2]?1:0;
+                regs[rd] = regs[rs1] < regs[rs2] ? 1 : 0;
                 break;
             case 3:
                 cout << "\tSLTU\tx" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
-                regs[rd] = (unsigned int)regs[rs1]<(unsigned int)regs[rs2]?1:0;
+                regs[rd] = (unsigned int) regs[rs1] < (unsigned int) regs[rs2] ? 1 : 0;
                 break;
             case 4:
                 cout << "\tXOR\tx" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
-                regs[rd] = regs[rs1]^regs[rs2];
+                regs[rd] = regs[rs1] ^ regs[rs2];
                 break;
             case 5:
-                if(funct7 == 32) {
+                if (funct7 == 32) {
                     cout << "\tSRA\tx" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
-                    for(int i = 0; i<regs[rs2]; i++) {
-                        regs[rd] = regs[rs1]>>1 | (((regs[rs1]>>31) ? 0xFFFFF800 : 0x0));
+                    for (int i = 0; i < regs[rs2]; i++) {
+                        regs[rd] = regs[rs1] >> 1 | (((regs[rs1] >> 31) ? 0xFFFFF800 : 0x0));
                     }
-                }
-                else {
+                } else {
                     cout << "\tSRL\tx" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
-                    for(int i = 0; i<regs[rs2]; i++) {
-                        regs[rd] = regs[rs1]>>1 & (0x7FFFFFFF);
+                    for (int i = 0; i < regs[rs2]; i++) {
+                        regs[rd] = regs[rs1] >> 1 & (0x7FFFFFFF);
                     }
                 }
                 break;
@@ -97,138 +110,179 @@ void instDecExec(unsigned int instWord)
                 cout << "\tAND\tx" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
                 regs[rd] = regs[rs1] & regs[rs2];
                 break;
-			default:
-			    cout << "\tUnkown R Instruction \n";
-		}
-	} else if (opcode==0b0100011) { //S instructions
-	    S_imm = rd & (funct7<<5);
-        switch (funct3){
+            default:
+                cout << "\tUnkown R Instruction \n";
+        }
+    } else if (opcode == 0b0100011) { //S instructions
+        S_imm = rd & (funct7 << 5);
+        switch (funct3) {
             case 0:
                 cout << "\tSB\tx" << rs1 << ", x" << rs2 << ", x" << S_imm << "\n";
-                memory[rs2+S_imm] = rs1 & 0x000000FF;
+                memory[rs2 + S_imm] = rs1 & 0x000000FF;
                 break;
             case 1:
                 cout << "\tSH\tx" << rs1 << ", x" << rs2 << ", x" << S_imm << "\n";
-                memory[rs2+S_imm] = rs1 & 0x0000FFFF;
+                memory[rs2 + S_imm] = rs1 & 0x0000FFFF;
                 break;
             case 2:
                 cout << "\tSW\tx" << rs1 << ", x" << rs2 << ", x" << S_imm << "\n";
-                memory[rs2+S_imm] = rs1;
+                memory[rs2 + S_imm] = rs1;
                 break;
             default:
                 cout << "\tUnkown S Instruction \n";
         }
-	} else if (opcode == 0b1100011) {
-	    B_imm = (((rd>>1)<<1)&0x0000001F) | (funct7&0x0000003F)<<5 | (rd&0x1<<11) | ((funct7>>6)&0x1)<<12;
-	    switch (funct3) {
+    } else if (opcode == 0b1100011) {
+        B_imm = (((rd >> 1) << 1) & 0x0000001F) | (funct7 & 0x0000003F) << 5 | (rd & 0x1 << 11) |
+                ((funct7 >> 6) & 0x1) << 12;
+        switch (funct3) {
             case 0:
-                cout << "\tBEQ\tx" << rs1 << ", x" << rs2 << ", "<< hex << "0x" << (int)B_imm << "\n";
-                pc = rs1==rs2?B_imm:pc;
+                cout << "\tBEQ\tx" << rs1 << ", x" << rs2 << ", " << hex << "0x" << (int) B_imm << "\n";
+                pc = rs1 == rs2 ? B_imm : pc;
                 break;
             case 1:
-                cout << "\tBNE\tx" << rs1 << ", x" << rs2 << ", "<< hex << "0x" << (int)B_imm << "\n";
-                pc = rs1!=rs2?B_imm:pc;
+                cout << "\tBNE\tx" << rs1 << ", x" << rs2 << ", " << hex << "0x" << (int) B_imm << "\n";
+                pc = rs1 != rs2 ? B_imm : pc;
                 break;
             case 4:
-                cout << "\tBLT\tx" << rs1 << ", x" << rs2 << ", "<< hex << "0x" << (int)B_imm << "\n";
-                pc = rs1<rs2?B_imm:pc;
+                cout << "\tBLT\tx" << rs1 << ", x" << rs2 << ", " << hex << "0x" << (int) B_imm << "\n";
+                pc = rs1 < rs2 ? B_imm : pc;
                 break;
             case 5:
-                cout << "\tBGE\tx" << rs1 << ", x" << rs2 << ", "<< hex << "0x" << (int)B_imm << "\n";
-                pc = rs1>=rs2?B_imm:pc;
+                cout << "\tBGE\tx" << rs1 << ", x" << rs2 << ", " << hex << "0x" << (int) B_imm << "\n";
+                pc = rs1 >= rs2 ? B_imm : pc;
                 break;
             case 6:
-                cout << "\tBLTU\tx" << rs1 << ", x" << rs2 << ", "<< hex << "0x" << (int)B_imm << "\n";
-                pc = (unsigned int)rs1<(unsigned int)rs2?B_imm:pc;
+                cout << "\tBLTU\tx" << rs1 << ", x" << rs2 << ", " << hex << "0x" << (int) B_imm << "\n";
+                pc = (unsigned int) rs1 < (unsigned int) rs2 ? B_imm : pc;
                 break;
             case 7:
-                cout << "\tBGEU\tx" << rs1 << ", x" << rs2 << ", "<< hex << "0x" << (int)B_imm << "\n";
-                pc = (unsigned int)rs1>=(unsigned int)rs2?B_imm:pc;
+                cout << "\tBGEU\tx" << rs1 << ", x" << rs2 << ", " << hex << "0x" << (int) B_imm << "\n";
+                pc = (unsigned int) rs1 >= (unsigned int) rs2 ? B_imm : pc;
                 break;
             default:
                 cout << "\tUnkown B Instruction \n";
-	    }
-	} else if(opcode == 0x13){	// I instructions
-		switch(funct3){
-			case 0:	cout << "\tADDI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
-					regs[rd] = regs[rs1] + (int)I_imm;
-					break;
+        }
+    } else if (opcode == 0x13) {    // I instructions
+        switch (funct3) {
+            case 0:
+                cout << "\tADDI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int) I_imm << "\n";
+                regs[rd] = regs[rs1] + (int) I_imm;
+                break;
 
-			case 2: cout << "\tSLTI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
-				if ((int)I_imm > regs[rs1]) regs[rd] = 1;
-				else regs[rd] = 0;
-					break;
+            case 2:
+                cout << "\tSLTI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int) I_imm << "\n";
+                if ((int) I_imm > regs[rs1]) regs[rd] = 1;
+                else regs[rd] = 0;
+                break;
 
-			case 3: cout << "\tSLTIU\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
-				if ((unsigned int)I_imm > (unsigned int)regs[rs1]) regs[rd] = 1;
-				else regs[rd] = 0;
-				break;
+            case 3:
+                cout << "\tSLTIU\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int) I_imm << "\n";
+                if ((unsigned int) I_imm > (unsigned int) regs[rs1]) regs[rd] = 1;
+                else regs[rd] = 0;
+                break;
 
-			case 4: cout << "\tXORI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
-				regs[rd] = regs[rs1] ^ (int)I_imm;
-				break;
+            case 4:
+                cout << "\tXORI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int) I_imm << "\n";
+                regs[rd] = regs[rs1] ^ (int) I_imm;
+                break;
 
-			case 6: cout << "\tORI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
-				regs[rd] = regs[rs1] | (int)I_imm;
-				break;
+            case 6:
+                cout << "\tORI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int) I_imm << "\n";
+                regs[rd] = regs[rs1] | (int) I_imm;
+                break;
 
-			case 7: cout << "\tANDI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
-				regs[rd] = regs[rs1] & (int)I_imm;
-				break;
+            case 7:
+                cout << "\tANDI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int) I_imm << "\n";
+                regs[rd] = regs[rs1] & (int) I_imm;
+                break;
 
-			case 5: 
-				unsigned int t0, t1;
-				t0 = ((instWord >> 25) & 0x7F);
-				t1 = ((instWord >> 20) & 0x1F);
+            case 5:
+                unsigned int t0, t1;
+                t0 = ((instWord >> 25) & 0x7F);
+                t1 = ((instWord >> 20) & 0x1F);
 
-				if (t0 == 0) {
-					cout << "\tSRLI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
-					for (int i = 0; i < t1; i++) {
-						regs[rd] = regs[rs1] >> 1 | (((regs[rs1] >> 31) ? 0xFFFFF800 : 0x0));
-					}
-				}
-				else {
-					cout << "\tSRAI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
-					for (int i = 0; i < t1; i++) {
-						regs[rd] = regs[rs1] >> 1 & (((regs[rs1] >> 31) ? 0xFFFFF800 : 0x0));
-					}
-				}
-				break;
+                if (t0 == 0) {
+                    cout << "\tSRLI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int) I_imm << "\n";
+                    for (int i = 0; i < t1; i++) {
+                        regs[rd] = regs[rs1] >> 1 | (((regs[rs1] >> 31) ? 0xFFFFF800 : 0x0));
+                    }
+                } else {
+                    cout << "\tSRAI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int) I_imm << "\n";
+                    for (int i = 0; i < t1; i++) {
+                        regs[rd] = regs[rs1] >> 1 & (((regs[rs1] >> 31) ? 0xFFFFF800 : 0x0));
+                    }
+                }
+                break;
 
-			case 1:
-				unsigned int t2;
-				t2 = ((instWord >> 20) & 0x1F);
-				cout << "\tSRAI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
-				for (int i = 0; i < t1; i++) {
-					regs[rd] = regs[rs1] << 1 & (((regs[rs1] << 31) ? 0xFFFFF800 : 0x0));
-				}
-				break;
-		}
-	}
-	else if (opcode == 0x3) {
-		switch (funct3) {
+            case 1:
+                unsigned int t2;
+                t2 = ((instWord >> 20) & 0x1F);
+                cout << "\tSRAI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int) I_imm << "\n";
+                for (int i = 0; i < t1; i++) {
+                    regs[rd] = regs[rs1] << 1 & (((regs[rs1] << 31) ? 0xFFFFF800 : 0x0));
+                }
+                break;
+        }
+    } else if (opcode == 0x3) {
+        switch (funct3) {
 
-		case 4: cout << "\tLBU\tx" << rd << "," << hex << "0x" << (int)I_imm << "(x" << rs1 << ")" << "\n";
-			regs[rd] = (unsigned char)memory[rs1 + ((int)I_imm)];
-			break;
+            case 4:
+                cout << "\tLBU\tx" << rd << "," << hex << "0x" << (int) I_imm << "(x" << rs1 << ")" << "\n";
+                regs[rd] = (unsigned char) memory[rs1 + ((int) I_imm)];
+                break;
 
-		case 0:	cout << "\tLB\tx" << rd << "," << hex << "0x" << (int)I_imm << "(x" << rs1 << ")" << "\n";
-			regs[rd] = (unsigned char)memory[rs1 + ((int)I_imm)] | ((((unsigned char)memory[rs1 + ((int)I_imm)] >> 7) ? 0xFFFFFF00 : 0x0));
-			break;
+            case 0:
+                cout << "\tLB\tx" << rd << "," << hex << "0x" << (int) I_imm << "(x" << rs1 << ")" << "\n";
+                regs[rd] = (unsigned char) memory[rs1 + ((int) I_imm)] |
+                           ((((unsigned char) memory[rs1 + ((int) I_imm)] >> 7) ? 0xFFFFFF00 : 0x0));
+                break;
 
-		case 1:	cout << "\tLH\tx" << rd << "," << hex << "0x" << (int)I_imm << "(x" << rs1 << ")" << "\n";
-			regs[rd] = ((unsigned char)memory[rs1 + ((int)I_imm)] | (unsigned char)memory[rs1 + ((int)I_imm + 1) << 8]) | ((((unsigned char)memory[rs1 + ((int)I_imm) + 1] >> 7) ? 0xFFFF0000 : 0x0));
-			break;
+            case 1:
+                cout << "\tLH\tx" << rd << "," << hex << "0x" << (int) I_imm << "(x" << rs1 << ")" << "\n";
+                regs[rd] = ((unsigned char) memory[rs1 + ((int) I_imm)] |
+                            (unsigned char) memory[rs1 + ((int) I_imm + 1) << 8]) |
+                           ((((unsigned char) memory[rs1 + ((int) I_imm) + 1] >> 7) ? 0xFFFF0000 : 0x0));
+                break;
 
-		case 5:	cout << "\tLHU\tx" << rd << "," << hex << "0x" << (int)I_imm << "(x" << rs1 << ")" << "\n";
-			regs[rd] = ((unsigned char)memory[rs1 + ((int)I_imm)] | (unsigned char)memory[rs1 + ((int)I_imm + 1) << 8]);
-			break;
+            case 5:
+                cout << "\tLHU\tx" << rd << "," << hex << "0x" << (int) I_imm << "(x" << rs1 << ")" << "\n";
+                regs[rd] = ((unsigned char) memory[rs1 + ((int) I_imm)] |
+                            (unsigned char) memory[rs1 + ((int) I_imm + 1) << 8]);
+                break;
 
-		case 2: cout << "\tLW\tx" << rd << "," << hex << "0x" << (int)I_imm << "(x" << rs1 << ")" << "\n";
-			regs[rd] = ((unsigned char)memory[rs1 + ((int)I_imm)] | (unsigned char)memory[rs1 + ((int)I_imm + 1) << 8 | (unsigned char)memory[rs1 + ((int)I_imm) + 2] << 16 | (unsigned char)memory[rs1 + ((int)I_imm) + 3] << 24]);
+            case 2:
+                cout << "\tLW\tx" << rd << "," << hex << "0x" << (int) I_imm << "(x" << rs1 << ")" << "\n";
+                regs[rd] = ((unsigned char) memory[rs1 + ((int) I_imm)] |
+                            (unsigned char) memory[rs1 + ((int) I_imm + 1) << 8 |
+                                                   (unsigned char) memory[rs1 + ((int) I_imm) + 2] << 16 |
+                                                   (unsigned char) memory[rs1 + ((int) I_imm) + 3] << 24]);
 
-		}
-	} else {
+        }
+    }else if (opcode==0b1110011){
+        if((rs2 | funct7<<5)==0) {
+            switch (regs[17]) {
+                case 1:
+                    cout << regs[10];
+                    break;
+                case 4:
+                    cout << memory[regs[10]];
+                    break;
+                case 5:
+                    cin >> regs[10];
+                    break;
+                case 8: //TODO
+                    for (int i = 0; i < regs[11]; ++i) {
+                        char x;
+                    }
+                    break;
+                case 10:
+                    exit(0);
+                    break;
+                default:
+                    cout<< "Unsupported Environment call\n";
+            }
+        }
+    } else {
         cout << "\tUnkown Instruction \n";
     }
 
@@ -252,6 +306,7 @@ int main(int argc, char *argv[]){
 		if(!inFile.read((char *)memory, fsize)) emitError("Cannot read from input file\n");
 
 		while(true){
+
 				instWord = 	(unsigned char)memory[pc] |
 							(((unsigned char)memory[pc+1])<<8) |
 							(((unsigned char)memory[pc+2])<<16) |
