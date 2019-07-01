@@ -49,15 +49,46 @@ void instDecExec(unsigned int instWord)
 
 	if(opcode == 0x33){		// R Instructions
 		switch(funct3){
-			case 0: if(funct7 == 32) {
-								cout << "\tSUB\tx" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
-								regs[rd] = regs[rs1] - regs[rs2];
-							}
-							else {
-								cout << "\tADD\tx" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
-								regs[rd] = regs[rs1] + regs[rs2];
-							}
-							break;
+			case 0:
+			    if(funct7 == 32) {
+                    cout << "\tSUB\tx" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
+                    regs[rd] = regs[rs1] - regs[rs2];
+                }
+                else {
+                    cout << "\tADD\tx" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
+                    regs[rd] = regs[rs1] + regs[rs2];
+                }
+                break;
+            case 1:
+                cout << "\tSLL\tx" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
+                regs[rd] = (regs[rs1])<<regs[rs2];
+                break;
+            case 2:
+                cout << "\tSLT\tx" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
+                regs[rd] = regs[rs1]<regs[rs2]?1:0;
+                break;
+            case 3:
+                cout << "\tSLTU\tx" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
+                regs[rd] = (unsigned int)regs[rs1]<(unsigned int)regs[rs2]?1:0;
+                break;
+            case 4:
+                cout << "\tXOR\tx" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
+                regs[rd] = regs[rs1]^regs[rs2];
+                break;
+            case 5:
+                if(funct7 == 32) {
+                    cout << "\tSRA\tx" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
+                    for(int i = 0; i<regs[rs2]; i++) {
+                        regs[rd] = regs[rs1]>>1 | (((regs[rs1]>>31) ? 0xFFFFF800 : 0x0));
+                    }
+                }
+                else {
+                    cout << "\tSRL\tx" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
+                    for(int i = 0; i<regs[rs2]; i++) {
+                        regs[rd] = regs[rs1]>>1 & (0x7FFFFFFF);
+                    }
+                }
+                break;
 			default:
 							cout << "\tUnkown R Instruction \n";
 		}
