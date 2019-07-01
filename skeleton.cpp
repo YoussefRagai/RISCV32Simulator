@@ -90,6 +90,12 @@ void instDecExec(unsigned int instWord)
                     }
                 }
                 break;
+            case 6:
+                regs[rd] = regs[rs1] | regs[rs2];
+                break;
+            case 7:
+                regs[rd] = regs[rs1] & regs[rs2];
+                break;
 			default:
 							cout << "\tUnkown R Instruction \n";
 		}
