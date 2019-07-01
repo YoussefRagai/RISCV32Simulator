@@ -19,7 +19,7 @@ unsigned int pc = 0x0;
 
 char memory[8*1024];	// only 8KB of memory located at address 0
 
-void emitError(char *s)
+void emitError(const char *s)
 {
 	cout << s;
 	exit(0);
@@ -30,7 +30,7 @@ void printPrefix(unsigned int instA, unsigned int instW){
 }
 void instDecExec(unsigned int instWord)
 {
-	unsigned int rd, rs1, rs2, funct3, funct7, opcode,;
+	unsigned int rd, rs1, rs2, funct3, funct7, opcode;
 	unsigned int I_imm, S_imm, B_imm, U_imm, J_imm;
 	unsigned int address;
 
@@ -44,7 +44,6 @@ void instDecExec(unsigned int instWord)
 
 	// — inst[31] — inst[30:25] inst[24:21] inst[20]
 	I_imm = ((instWord >> 20) & 0x7FF) | (((instWord >> 31) ? 0xFFFFF800 : 0x0));
-
 
 	printPrefix(instPC, instWord);
 
@@ -129,24 +128,56 @@ void instDecExec(unsigned int instWord)
 
 			case 5: 
 				unsigned int t0, t1;
-				t0= ((instWord >> 25) & 0x7F)
-				t1= ((instWord >> 20) & 0x1F)
+				t0 = ((instWord >> 25) & 0x7F);
+				t1 = ((instWord >> 20) & 0x1F);
 
-					if(t0==0)
-						cout << "\tSRLI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
-						for (int i = 0; i<t1; i++) {
+				if (t0 == 0) {
+					cout << "\tSRLI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
+					for (int i = 0; i < t1; i++) {
 						regs[rd] = regs[rs1] >> 1 | (((regs[rs1] >> 31) ? 0xFFFFF800 : 0x0));
-					else 
-						cout << "\tSRAI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
-						for (int i = 0; i<t1; i++) {
+					}
+				}
+				else {
+					cout << "\tSRAI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
+					for (int i = 0; i < t1; i++) {
 						regs[rd] = regs[rs1] >> 1 & (((regs[rs1] >> 31) ? 0xFFFFF800 : 0x0));
+					}
+				}
 				break;
 
-			default:
-					cout << "\tUnkown I Instruction \n";
+			case 1:
+				unsigned int t0;
+				t0 = ((instWord >> 20) & 0x1F);
+				cout << "\tSRAI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
+				for (int i = 0; i < t1; i++) {
+					regs[rd] = regs[rs1] << 1 & (((regs[rs1] << 31) ? 0xFFFFF800 : 0x0));
+				}
+				break;
 		}
-	} else {
-		cout << "\tUnkown Instruction \n";
+	}
+	else if (opcode == 0x3) {
+		switch (funct3) {
+
+		case 4: cout << "\tLBU\tx" << rd << "," << hex << "0x" << (int)I_imm << "(x" << rs1 << ")" << "\n";
+			regs[rd] = (unsigned char)memory[rs1 + ((int)I_imm)];
+			break;
+
+		case 0:	cout << "\tLB\tx" << rd << "," << hex << "0x" << (int)I_imm << "(x" << rs1 << ")" << "\n";
+			regs[rd] = (unsigned char)memory[rs1 + ((int)I_imm)] | ((((unsigned char)memory[rs1 + ((int)I_imm)] >> 7) ? 0xFFFFFF00 : 0x0));
+			break;
+
+		case 1:	cout << "\tLH\tx" << rd << "," << hex << "0x" << (int)I_imm << "(x" << rs1 << ")" << "\n";
+			regs[rd] = ((unsigned char)memory[rs1 + ((int)I_imm)] | (unsigned char)memory[rs1 + ((int)I_imm + 1) << 8]) | ((((unsigned char)memory[rs1 + ((int)I_imm) + 1] >> 7) ? 0xFFFF0000 : 0x0));
+			break;
+
+		case 5:	cout << "\tLHU\tx" << rd << "," << hex << "0x" << (int)I_imm << "(x" << rs1 << ")" << "\n";
+			regs[rd] = ((unsigned char)memory[rs1 + ((int)I_imm)] | (unsigned char)memory[rs1 + ((int)I_imm + 1) << 8]);
+			break;
+
+		case 2: cout << "\tLW\tx" << rd << "," << hex << "0x" << (int)I_imm << "(x" << rs1 << ")" << "\n";
+			regs[rd] = ((unsigned char)memory[rs1 + ((int)I_imm)] | (unsigned char)memory[rs1 + ((int)I_imm + 1) << 8 | (unsigned char)memory[rs1 + ((int)I_imm) + 2] << 16 | (unsigned char)memory[rs1 + ((int)I_imm) + 3] << 24]);
+
+		}
 	}
 
 }
