@@ -91,9 +91,11 @@ void instDecExec(unsigned int instWord)
                 }
                 break;
             case 6:
+                cout << "\tOR\tx" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
                 regs[rd] = regs[rs1] | regs[rs2];
                 break;
             case 7:
+                cout << "\tAND\tx" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
                 regs[rd] = regs[rs1] & regs[rs2];
                 break;
 			default:
