@@ -12,7 +12,6 @@
 #include <fstream>
 #include "stdlib.h"
 #include <iomanip>
-
 using namespace std;
 
 int regs[32]={0};
