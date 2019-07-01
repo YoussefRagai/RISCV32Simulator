@@ -125,12 +125,15 @@ void instDecExec(unsigned int instWord)
 				unsigned int t0, t1;
 				t0= ((instWord >> 25) & 0x7F)
 				t1= ((instWord >> 20) & 0x1F)
+
 					if(t0==0)
 						cout << "\tSRLI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
-						regs[rd] = regs[rs1] >> t1;
+						for (int i = 0; i<t1; i++) {
+						regs[rd] = regs[rs1] >> 1 | (((regs[rs1] >> 31) ? 0xFFFFF800 : 0x0));
 					else 
 						cout << "\tSRAI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
-						regs[rd] = regs[rs1] >> t1;
+						for (int i = 0; i<t1; i++) {
+						regs[rd] = regs[rs1] >> 1 & (((regs[rs1] >> 31) ? 0xFFFFF800 : 0x0));
 				break;
 
 			default:
