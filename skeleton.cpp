@@ -44,6 +44,8 @@ void instDecExec(unsigned int instWord)
 
 	// — inst[31] — inst[30:25] inst[24:21] inst[20]
 	I_imm = ((instWord >> 20) & 0x7FF) | (((instWord >> 31) ? 0xFFFFF800 : 0x0));
+	U_imm = (instWord & 0xFFFFF000);
+	J_imm = ((((instWord >> 21) & 0x1FF) | ((instWord >> 20) & 0x1) | ((instWord >> 12) & 0xFF) | ((instWord >> 31) & 0x1) << 12 )& 0xFFFFF000);
 
 	printPrefix(instPC, instWord);
 
@@ -205,7 +207,19 @@ void instDecExec(unsigned int instWord)
 			regs[rd] = ((unsigned char)memory[rs1 + ((int)I_imm)] | (unsigned char)memory[rs1 + ((int)I_imm + 1) << 8 | (unsigned char)memory[rs1 + ((int)I_imm) + 2] << 16 | (unsigned char)memory[rs1 + ((int)I_imm) + 3] << 24]);
 
 		}
-	} else {
+	}
+	else if (opcode == 55) {
+		cout << "\tLUI\tx" << rd << "," << hex << "0x" << (int)U_imm << "\n";
+		regs[rd] = regs[rd] + (int)U_imm;
+	}
+
+	else if (opcode == 23) {
+		cout << "\tAUIPC\tx" << rd << "," << hex << "0x" << (int)U_imm << "\n";
+		regs[rd] = pc + (int)J_imm;
+	}
+	
+	
+	else {
         cout << "\tUnkown Instruction \n";
     }
 
