@@ -30,7 +30,7 @@ void printPrefix(unsigned int instA, unsigned int instW){
 }
 void instDecExec(unsigned int instWord)
 {
-	unsigned int rd, rs1, rs2, funct3, funct7, opcode;
+	unsigned int rd, rs1, rs2, funct3, funct7, opcode,;
 	unsigned int I_imm, S_imm, B_imm, U_imm, J_imm;
 	unsigned int address;
 
@@ -44,6 +44,7 @@ void instDecExec(unsigned int instWord)
 
 	// — inst[31] — inst[30:25] inst[24:21] inst[20]
 	I_imm = ((instWord >> 20) & 0x7FF) | (((instWord >> 31) ? 0xFFFFF800 : 0x0));
+
 
 	printPrefix(instPC, instWord);
 
@@ -66,6 +67,41 @@ void instDecExec(unsigned int instWord)
 			case 0:	cout << "\tADDI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
 					regs[rd] = regs[rs1] + (int)I_imm;
 					break;
+
+			case 2: cout << "\tSLTI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
+				if ((int)I_imm > regs[rs1]) regs[rd] = 1;
+				else regs[rd] = 0;
+					break;
+
+			case 3: cout << "\tSLTIU\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
+				if ((unsigned int)I_imm > (unsigned int)regs[rs1]) regs[rd] = 1;
+				else regs[rd] = 0;
+				break;
+
+			case 4: cout << "\tXORI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
+				regs[rd] = regs[rs1] ^ (int)I_imm;
+				break;
+
+			case 6: cout << "\tORI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
+				regs[rd] = regs[rs1] | (int)I_imm;
+				break;
+
+			case 7: cout << "\tANDI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
+				regs[rd] = regs[rs1] & (int)I_imm;
+				break;
+
+			case 5: 
+				unsigned int t0, t1;
+				t0= ((instWord >> 25) & 0x7F)
+				t1= ((instWord >> 20) & 0x1F)
+					if(t0==0)
+						cout << "\tSRLI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
+						regs[rd] = regs[rs1] >> t1;
+					else 
+						cout << "\tSRAI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
+						regs[rd] = regs[rs1] >> t1;
+				break;
+
 			default:
 					cout << "\tUnkown I Instruction \n";
 		}
