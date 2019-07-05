@@ -403,7 +403,8 @@ void instDecExec(unsigned int instWord) {
 
 int main(int argc, char *argv[]){
 
-	unsigned int instWord=0, check=0;
+	unsigned int instWord = 0;
+	unsigned short check1=0 , check2=0, bit16=0;
 	ifstream inFile;
 	ofstream outFile;
 
@@ -420,27 +421,44 @@ int main(int argc, char *argv[]){
 
 		while(true){
 
-
-				instWord = 	(unsigned char)memory[pc] |
-							(((unsigned char)memory[pc+1])<<8) |
-
 			tp = pc;
-				check= 	(((unsigned char)memory[pc] |
-							(((unsigned char)memory[pc+1])<<8))&0x3) |
+			check1 = (((unsigned char)memory[tp] |
+				(((unsigned char)memory[tp + 1]) << 8)) & 0x3);
 
-
-							(((unsigned char)memory[pc+2])<<16) |
-							(((unsigned char)memory[pc+3])<<24);
-
-
-				/*instWord = 	(unsigned char)memory[pc] |
-				(((unsigned char)memory[pc + 1]) << 8) |
+			if (check1 == 0x3) {
+				instWord = (unsigned char)memory[pc] |
+					(((unsigned char)memory[pc + 1]) << 8) |
 					(((unsigned char)memory[pc + 2]) << 16) |
-					(((unsigned char)memory[pc + 3]) << 24);*/
+					(((unsigned char)memory[pc + 3]) << 24);
 				pc += 4;
+				instDecExec(instWord);
+			}
+			else {
+				check2 = ((((unsigned char)memory[tp + 2]) << 16) |
+					(((unsigned char)memory[tp + 3]) << 24) & 0x3);
+				if (check2 == 0x3) {
+					instWord = (unsigned char)memory[pc] |
+						(((unsigned char)memory[pc + 1]) << 8) |
+						(((unsigned char)memory[pc + 2]) << 16) |
+						(((unsigned char)memory[pc + 3]) << 24);
+					pc += 4
+						instDecExec(instWord);
+				}
+				else {
+					bit16 = (unsigned char)memory[pc] |
+						(((unsigned char)memory[pc + 1]) << 8);
+					pc += 2;
+					translateTo16Bit(bit16);
+				}
+			}
+						
+
+
+				
+				// pc += 4;
 				// remove the following line once you have a complete simulator
 				if(pc==32) break;			// stop when PC reached address 32
-				instDecExec(instWord);
+				//instDecExec(instWord);
 		}
 
 		// dump the registers
