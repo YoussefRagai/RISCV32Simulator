@@ -49,7 +49,14 @@ void instDecExec(unsigned int instWord) {
     unsigned int I_imm, S_imm, B_imm, U_imm, J_imm;
     unsigned int address;
 
+<<<<<<< HEAD
     unsigned int instPC = pc - 4;
+=======
+	// — inst[31] — inst[30:25] inst[24:21] inst[20]
+	I_imm = ((instWord >> 20) & 0x7FF) | (((instWord >> 31) ? 0xFFFFF800 : 0x0));
+	U_imm = (instWord & 0xFFFFF000);
+	J_imm = ((((instWord >> 21) & 0x1FF) | ((instWord >> 20) & 0x1) | ((instWord >> 12) & 0xFF) | ((instWord >> 31) & 0x1) << 12 )& 0xFFFFF000);
+>>>>>>> c230fe6e1600fd5bf99797c6ee3a1592650ce1f9
 
     opcode = instWord & 0x0000007F;
     rd = (instWord >> 7) & 0x0000001F;
@@ -196,6 +203,7 @@ void instDecExec(unsigned int instWord) {
                 regs[rd] = regs[rs1] & (int) I_imm;
                 break;
 
+<<<<<<< HEAD
             case 5:
                 unsigned int t0, t1;
                 t0 = ((instWord >> 25) & 0x7F);
@@ -280,9 +288,25 @@ void instDecExec(unsigned int instWord) {
                     break;
                 default:
                     cout<< "Unsupported Environment call\n";
-            }
+
         }
     } else {
+=======
+		}
+	}
+	else if (opcode == 55) {
+		cout << "\tLUI\tx" << rd << "," << hex << "0x" << (int)U_imm << "\n";
+		regs[rd] = regs[rd] + (int)U_imm;
+	}
+
+	else if (opcode == 23) {
+		cout << "\tAUIPC\tx" << rd << "," << hex << "0x" << (int)U_imm << "\n";
+		regs[rd] = pc + (int)J_imm;
+	}
+	
+	
+	else {
+>>>>>>> c230fe6e1600fd5bf99797c6ee3a1592650ce1f9
         cout << "\tUnkown Instruction \n";
     }
 
