@@ -27,6 +27,14 @@ void emitError(const char *s)
 	exit(0);
 }
 
+
+unsigned int translateTo16Bit(unsigned short compressedI) {
+    unsigned int funct3, funct4, rd, rs1, rs2, imm, offset, target;
+
+    funct3 = (compressedI>>13)&0x7;
+    funct4 = funct3<<1 & (compressedI>>12&0x1);
+}
+
 void printPrefix(unsigned int instA, unsigned int instW){
 	cout << "0x" << hex << std::setfill('0') << std::setw(8) << instA << "\t0x" << std::setw(8) << instW;
 }
@@ -169,14 +177,6 @@ void instDecExec(unsigned int instWord) {
                 cout << "\tUnkown B Instruction \n";
 
         }
-    } else if (opcode == 0x13) {    // I instructions
-        switch (funct3) {
-            case 0:
-                cout << "\tADDI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int) I_imm << "\n";
-                regs[rd] = regs[rs1] + (int) I_imm;
-                break;
-
-	    }
 	} else if(opcode == 0x13){	// I instructions
 		switch(funct3){
 			case 0:	cout << "\tADDI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
@@ -355,6 +355,7 @@ void instDecExec(unsigned int instWord) {
         }
     } else {
 
+            switch()
 		case 1:	cout << "\tLH\tx" << rd << "," << hex << "0x" << (int)I_imm << "(x" << rs1 << ")" << "\n";
 			regs[rd] = ((unsigned char)memory[rs1 + ((int)I_imm)] | (((unsigned char)memory[rs1 + ((int)I_imm + 1)] )<< 8) | ((((unsigned char)memory[rs1 + ((int)I_imm) + 1]) >> 7) ? 0xFFFF0000 : 0x0));
 			break;
