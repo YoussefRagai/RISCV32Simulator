@@ -12,6 +12,8 @@
 #include <fstream>
 #include "stdlib.h"
 #include <iomanip>
+#include <cstring>
+
 using namespace std;
 
 int regs[32]={0};
@@ -42,7 +44,7 @@ void instDecExec16(unsigned int instHalf){
     rs2 = (instHalf >> 2) & 0x0000001F;
     funct4 = (instHalf>>12) & 0x0000000F;
 
-    if(opcode==)
+    //if(opcode==)
 }
 void instDecExec(unsigned int instWord) {
     unsigned int rd, rs1, rs2, funct3, funct7, opcode;
@@ -260,6 +262,7 @@ void instDecExec(unsigned int instWord) {
         }
     }else if (opcode==0b1110011){
         if((rs2 | funct7<<5)==0) {
+            char* buffer;
             switch (regs[17]) {
                 case 1:
                     cout << regs[10];
@@ -271,9 +274,10 @@ void instDecExec(unsigned int instWord) {
                     cin >> regs[10];
                     break;
                 case 8: //TODO
-                    for (int i = 0; i < regs[11]; ++i) {
-                        char x;
-                    }
+                    buffer = (char*) calloc(regs[11]+1, sizeof(char));
+                    cin >> buffer;
+                    if(buffer[regs[11]]!=0) buffer[regs[11]]=0;
+                    strcpy(&memory[regs[10]],buffer);
                     break;
                 case 10:
                     exit(0);
