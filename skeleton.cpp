@@ -17,7 +17,7 @@
 using namespace std;
 
 int regs[32]={0};
-unsigned int pc = 0x0;
+unsigned int pc = 0x0, tp=0x0;
 
 char memory[8*1024];	// only 8KB of memory located at address 0
 
@@ -55,7 +55,7 @@ void instDecExec(unsigned int instWord) {
 	// — inst[31] — inst[30:25] inst[24:21] inst[20]
 	I_imm = ((instWord >> 20) & 0x7FF) | (((instWord >> 31) ? 0xFFFFF800 : 0x0));
 	U_imm = (instWord & 0xFFFFF000);
-	J_imm = ((((instWord >> 21) & 0x1FF) | ((instWord >> 20) & 0x1) | ((instWord >> 12) & 0xFF) | ((instWord >> 31) & 0x1) << 12 )& 0xFFFFF000);
+	J_imm = ((((instWord >> 21) & 0x1FF) | (((instWord >> 20) & 0x1)<<10) | (((instWord >> 12) & 0xFF)<<11) | (((instWord >> 31) & 0x1)<<20))<<1);
 
     opcode = instWord & 0x0000007F;
     rd = (instWord >> 7) & 0x0000001F;
@@ -167,6 +167,7 @@ void instDecExec(unsigned int instWord) {
                 break;
             default:
                 cout << "\tUnkown B Instruction \n";
+
         }
     } else if (opcode == 0x13) {    // I instructions
         switch (funct3) {
@@ -174,6 +175,67 @@ void instDecExec(unsigned int instWord) {
                 cout << "\tADDI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int) I_imm << "\n";
                 regs[rd] = regs[rs1] + (int) I_imm;
                 break;
+
+	    }
+	} else if(opcode == 0x13){	// I instructions
+		switch(funct3){
+			case 0:	cout << "\tADDI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
+					regs[rd] = regs[rs1] + (int)I_imm;
+					break;
+
+			case 2: cout << "\tSLTI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
+				if ((int)I_imm > regs[rs1]) regs[rd] = 1;
+				else regs[rd] = 0;
+					break;
+
+			case 3: cout << "\tSLTIU\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
+				if ((unsigned int)I_imm > (unsigned int)regs[rs1]) regs[rd] = 1;
+				else regs[rd] = 0;
+				break;
+
+			case 4: cout << "\tXORI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
+				regs[rd] = regs[rs1] ^ (int)I_imm;
+				break;
+
+			case 6: cout << "\tORI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
+				regs[rd] = regs[rs1] | (int)I_imm;
+				break;
+
+			case 7: cout << "\tANDI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
+				regs[rd] = regs[rs1] & (int)I_imm;
+				break;
+
+			case 5: 
+				unsigned int t0, t1;
+				t0 = ((instWord >> 25) & 0x7F);
+				t1 = ((instWord >> 20) & 0x1F);
+
+				if (t0 == 0) {
+					cout << "\tSRLI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
+					for (int i = 0; i < t1; i++) {
+						regs[rd] = regs[rs1] >> 1 | (((regs[rs1] >> 31) ? 0xFFFFF800 : 0x0));
+					}
+				}
+				else {
+					cout << "\tSRAI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
+					for (int i = 0; i < t1; i++) {
+						regs[rd] = regs[rs1] >> 1 & (((regs[rs1] >> 31) ? 0xFFFFF800 : 0x0));
+					}
+				}
+				break;
+
+			case 1:
+				unsigned int t2;
+				t2 = ((instWord >> 20) & 0x1F);
+				cout << "\tSLLI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
+				for (int i = 0; i < t1; i++) {
+					regs[rd] = (regs[rs1] << 1) & (((regs[rs1] << 31) ? 0xFFFFF800 : 0x0));
+				}
+				break;
+		}
+	}
+	else if (opcode == 0x3) {
+		switch (funct3) {
 
             case 2:
                 cout << "\tSLTI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int) I_imm << "\n";
@@ -186,6 +248,7 @@ void instDecExec(unsigned int instWord) {
                 if ((unsigned int) I_imm > (unsigned int) regs[rs1]) regs[rd] = 1;
                 else regs[rd] = 0;
                 break;
+
 
             case 4:
                 cout << "\tXORI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int) I_imm << "\n";
@@ -291,6 +354,19 @@ void instDecExec(unsigned int instWord) {
 
         }
     } else {
+
+		case 1:	cout << "\tLH\tx" << rd << "," << hex << "0x" << (int)I_imm << "(x" << rs1 << ")" << "\n";
+			regs[rd] = ((unsigned char)memory[rs1 + ((int)I_imm)] | (((unsigned char)memory[rs1 + ((int)I_imm + 1)] )<< 8) | ((((unsigned char)memory[rs1 + ((int)I_imm) + 1]) >> 7) ? 0xFFFF0000 : 0x0));
+			break;
+
+		case 5:	cout << "\tLHU\tx" << rd << "," << hex << "0x" << (int)I_imm << "(x" << rs1 << ")" << "\n";
+			regs[rd] = (unsigned char)memory[rs1 + ((int)I_imm)] | (((unsigned char)memory[rs1 + ((int)I_imm + 1)]) << 8);
+			break;
+
+		case 2: cout << "\tLW\tx" << rd << "," << hex << "0x" << (int)I_imm << "(x" << rs1 << ")" << "\n";
+			regs[rd] = (unsigned char)memory[rs1 + ((int)I_imm)] | (((unsigned char)memory[rs1 + ((int)I_imm + 1)]) << 8) | (((unsigned char)memory[rs1 + ((int)I_imm) + 2]) << 16) | (((unsigned char)memory[rs1 + ((int)I_imm) + 3]) << 24);
+			break;
+
 		}
 	}
 	else if (opcode == 55) {
@@ -300,7 +376,21 @@ void instDecExec(unsigned int instWord) {
 
 	else if (opcode == 23) {
 		cout << "\tAUIPC\tx" << rd << "," << hex << "0x" << (int)U_imm << "\n";
-		regs[rd] = pc + (int)J_imm;
+		regs[rd] = pc + (int)U_imm;
+	}
+
+	else if (opcode == 111) {
+		cout << "\tJAL\tx" << rd << "," << hex << "0x" << (int)J_imm << "\n";
+		J_imm = J_imm | (((J_imm >> 20) ? 0xFFFFF800 : 0x0));
+		pc = (unsigned char)memory[(int)J_imm] | (((unsigned char)memory[(int)J_imm+1]) << 8) | (((unsigned char)memory[(int)J_imm+2] )<< 16) | (((unsigned char)memory[(int)J_imm+3]) <<24);
+		regs[rd] = pc + 4;
+	}
+
+	else if (opcode == 103) {
+		cout << "\tJALR\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
+		memory[pc] = ((int)I_imm + regs[rs1]) & 0xFFFFFFFE;
+		regs[rd] = memory[pc+4] ;
+
 	}
 	
 	
@@ -312,7 +402,7 @@ void instDecExec(unsigned int instWord) {
 
 int main(int argc, char *argv[]){
 
-	unsigned int instWord=0;
+	unsigned int instWord=0, check=0;
 	ifstream inFile;
 	ofstream outFile;
 
@@ -329,10 +419,23 @@ int main(int argc, char *argv[]){
 
 		while(true){
 
+
 				instWord = 	(unsigned char)memory[pc] |
 							(((unsigned char)memory[pc+1])<<8) |
+
+			tp = pc;
+				check= 	(((unsigned char)memory[pc] |
+							(((unsigned char)memory[pc+1])<<8))&0x3) |
+
+
 							(((unsigned char)memory[pc+2])<<16) |
 							(((unsigned char)memory[pc+3])<<24);
+
+
+				/*instWord = 	(unsigned char)memory[pc] |
+				(((unsigned char)memory[pc + 1]) << 8) |
+					(((unsigned char)memory[pc + 2]) << 16) |
+					(((unsigned char)memory[pc + 3]) << 24);*/
 				pc += 4;
 				// remove the following line once you have a complete simulator
 				if(pc==32) break;			// stop when PC reached address 32
